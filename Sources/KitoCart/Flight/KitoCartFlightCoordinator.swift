@@ -41,17 +41,18 @@ public final class KitoCartFlightCoordinator: KitoViewModel {
     /// - Parameters:
     ///   - symbol: SF Symbol shown as the flying icon — usually your
     ///     product's category icon, or just `"cart.fill"`.
+    ///   - style: The flight path — `.arc` (default), `.lob`, `.dart` or `.spin`.
     ///   - onArrive: Called when the flight completes — the natural place to
     ///     bump `KitoCartViewModel.add(item)`, so the cart count updates in
     ///     sync with the animation landing rather than instantly on tap.
-    public func fly(from sourceID: String, symbol: String = "cart.fill", color: Color = .accentColor, onArrive: (() -> Void)? = nil) {
+    public func fly(from sourceID: String, symbol: String = "cart.fill", color: Color = .accentColor, style: KitoCartFlightStyle = .arc, onArrive: (() -> Void)? = nil) {
         guard let start = sourceFrames[sourceID], cartAnchorFrame != .zero else {
             // Frame not ready yet — still honor the intent so cart state
             // doesn't silently drop an add just because the animation can't play.
             onArrive?()
             return
         }
-        let flight = KitoCartFlight(id: UUID(), startFrame: start, endFrame: cartAnchorFrame, symbol: symbol, color: color, onArrive: onArrive)
+        let flight = KitoCartFlight(id: UUID(), startFrame: start, endFrame: cartAnchorFrame, symbol: symbol, color: color, style: style, onArrive: onArrive)
         flights.append(flight)
     }
 

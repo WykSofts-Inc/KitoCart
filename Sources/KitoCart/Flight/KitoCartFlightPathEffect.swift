@@ -18,6 +18,7 @@ struct KitoCartFlightPathEffect: GeometryEffect {
     var progress: CGFloat
     let start: CGPoint
     let end: CGPoint
+    var lift: CGFloat = 90
 
     var animatableData: CGFloat {
         get { progress }
@@ -28,7 +29,7 @@ struct KitoCartFlightPathEffect: GeometryEffect {
         let t = progress
         // Control point arcs upward from the midpoint — reads as a "toss"
         // rather than a straight slide, which is what makes it feel alive.
-        let controlPoint = CGPoint(x: (start.x + end.x) / 2, y: min(start.y, end.y) - 90)
+        let controlPoint = CGPoint(x: (start.x + end.x) / 2, y: min(start.y, end.y) - lift)
 
         let oneMinusT = 1 - t
         let x = oneMinusT * oneMinusT * start.x + 2 * oneMinusT * t * controlPoint.x + t * t * end.x
