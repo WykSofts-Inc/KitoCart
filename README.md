@@ -243,6 +243,14 @@ system frame-by-frame, which is what makes the curved arc interpolate
 smoothly instead of jumping. See the doc comment on that type if you're
 customizing the curve.
 
+## Right-to-left
+
+- Layout mirrors automatically: rows, the free-delivery bar and its scooter thumb, the Delete button (it sits on the trailing side).
+- `kitoSwipeToDelete` follows the finger in RTL: swipe right to reveal Delete in Arabic/Hebrew layouts.
+- The add-to-cart flight is drawn in screen coordinates, so it lands on the cart anchor in either direction.
+- Disclosure chevrons and the empty-cart arrow use `chevron.forward` / `arrow.forward` and flip with the layout.
+- `KitoCartMoney` deliberately formats with fixed Latin digits and separators; format prices yourself if you need locale digits.
+
 ## License
 
 MIT

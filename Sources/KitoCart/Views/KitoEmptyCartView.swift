@@ -52,7 +52,7 @@ public struct KitoEmptyCartView: View {
             }
             if let actionTitle, let action {
                 Button(action: action) {
-                    Label(actionTitle, systemImage: "arrow.right")
+                    Label(actionTitle, systemImage: "arrow.forward")
                         .labelStyle(KitoTrailingIconLabelStyle())
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(tint == nil ? theme.colors.onPrimary : .white)
