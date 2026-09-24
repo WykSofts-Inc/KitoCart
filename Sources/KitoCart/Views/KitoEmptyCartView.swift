@@ -25,7 +25,7 @@ public struct KitoEmptyCartView: View {
 
     public init(
         title: String = "Your cart is empty",
-        message: String = "Browse the menu and add something you love.",
+        message: String = "Add something you love and it'll show up here.",
         actionTitle: String? = "Start shopping",
         tint: Color? = nil,
         action: (() -> Void)? = nil

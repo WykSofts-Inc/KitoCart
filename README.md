@@ -8,7 +8,7 @@ tween.
 ## Install
 
 ```swift
-.package(url: "https://github.com/WykSofts-Inc/KitoCart.git", from: "1.1.0"),
+.package(url: "https://github.com/WykSofts-Inc/KitoCart.git", from: "1.2.0"),
 ```
 
 ## Setup — three pieces, wired once near your root
@@ -179,6 +179,37 @@ KitoCartView(
     ProductThumbnail(item)
 }
 ```
+
+**Your own words for the empty state, and the promo code in your hands (1.2):**
+
+```swift
+@State private var promo: KitoPromoCode?
+
+KitoCartView(
+    cart: cart,
+    promoValidator: validator,
+    appliedPromo: $promo,                        // read or preset the applied code
+    onCheckout: { pricing in                     // pricing.promo is the applied code too
+        startPayment(pricing.total, promoCode: pricing.promo?.code)
+    },
+    onBrowse: { selectedTab = .home },
+    emptyTitle: "Your bag is empty",
+    emptyMessage: "Pieces you add from any tab land here.",
+    emptyActionTitle: "Discover new in"
+) { item in
+    ProductThumbnail(item)
+}
+
+// Or hear about changes without owning the state:
+KitoCartView(cart: cart, promoValidator: validator, onPromoChange: { analytics.log($0?.code) },
+             onCheckout: { _ in }) { _ in EmptyView() }
+
+// Or a completely different empty state:
+KitoCartView(cart: cart, onCheckout: { _ in }) { _ in EmptyView() }
+    .emptyState { MyEmptyBag() }
+```
+
+The default empty message no longer mentions a menu, so it reads right for any kind of shop.
 
 **Or the pieces on their own:**
 
