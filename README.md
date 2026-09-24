@@ -8,7 +8,7 @@ tween.
 ## Install
 
 ```swift
-.package(url: "https://github.com/WykSofts-Inc/KitoCart.git", from: "1.0.0"),
+.package(url: "https://github.com/WykSofts-Inc/KitoCart.git", from: "1.1.0"),
 ```
 
 ## Setup — three pieces, wired once near your root
@@ -163,6 +163,46 @@ usable on its own if you only want cart state:
 @State private var cart = KitoCartViewModel()
 cart.add(KitoCartItem(id: "1", name: "Burger", unitPrice: 8.5))
 ```
+
+## Cart components (1.1)
+
+**A whole cart page** — free-delivery progress, swipe-to-delete with undo, promo
+codes, an animated price breakdown and checkout, or the empty state:
+
+```swift
+KitoCartView(
+    cart: cart,
+    rules: KitoCartPricingRules(deliveryFee: 150, freeDeliveryThreshold: 2_000, serviceFeeRate: 0.02),
+    promoValidator: KitoPromoValidator(codes: [KitoPromoCode(code: "KARIBU10", kind: .percent(10, cap: 300))]),
+    onCheckout: { pricing in startPayment(pricing.total) }
+) { item in
+    ProductThumbnail(item)
+}
+```
+
+**Or the pieces on their own:**
+
+```swift
+KitoQuantityStepper(value: $quantity, style: .expanding)     // .capsule, .circles, .vertical
+KitoPromoCodeField(applied: $promo, validator: validator, subtotal: cart.subtotal)
+KitoPriceBreakdown(pricing: rules.pricing(subtotal: cart.subtotal, promo: promo))
+KitoFreeDeliveryProgress(pricing: pricing)
+KitoMiniCartBar(count: cart.totalQuantity, total: cart.subtotal) { showCart = true }
+KitoEmptyCartView { showMenu = true }
+
+row.kitoSwipeToDelete { cart.remove(id: item.id) }
+screen.kitoCartUndoBar(cart)                                  // "Removed Pilau · Undo"
+screen.kitoAddedToCartToast(item: $justAdded, style: .banner) // .pill, .banner, .card
+```
+
+**Flight styles:**
+
+```swift
+cartFlight.fly(from: product.id, symbol: "bag.fill", style: .lob) { cart.add(item) }   // .arc, .lob, .dart, .spin
+```
+
+Every animation respects Reduce Motion, and amounts use fixed grouping
+(`KitoCartMoney.string(1250)` → "KES 1,250") so a cart reads the same on every device.
 
 ## How the animation actually works
 
