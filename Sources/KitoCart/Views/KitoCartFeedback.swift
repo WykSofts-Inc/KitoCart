@@ -73,7 +73,7 @@ public struct KitoMiniCartBar: View {
                     .font(.headline.weight(.heavy))
                     .monospacedDigit()
                     .contentTransition(.numericText(value: (total as NSDecimalNumber).doubleValue))
-                Image(systemName: "chevron.right").font(.caption.weight(.bold)).opacity(0.7)
+                Image(systemName: "chevron.forward").font(.caption.weight(.bold)).opacity(0.7)
             }
             .foregroundStyle(ink)
             .padding(.leading, 8)

@@ -61,7 +61,8 @@ struct KitoCartFlightOverlay: View {
         // Source and anchor frames are registered in global coordinates; convert them into
         // this overlay's own space so the flight lines up wherever the host sits (a full
         // screen, a sheet, a card in a scroll view), and pin items to the top-leading corner
-        // so the path effect's translation starts from a known origin.
+        // so the path effect's translation starts from a known origin. Global frames are
+        // physical (left-to-right) even in RTL, so the overlay is laid out left-to-right too.
         GeometryReader { proxy in
             let origin = proxy.frame(in: .global).origin
             ZStack(alignment: .topLeading) {
@@ -73,6 +74,7 @@ struct KitoCartFlightOverlay: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
         }
+        .environment(\.layoutDirection, .leftToRight)
         .allowsHitTesting(false)
     }
 }

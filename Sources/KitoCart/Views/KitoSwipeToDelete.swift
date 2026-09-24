@@ -10,8 +10,8 @@ import SwiftUI
 import KitoCore
 
 public extension View {
-    /// Swipe left to reveal a Delete button; swipe far enough and the row slides away and
-    /// `onDelete` runs. Works in a `ScrollView`/`VStack`, not only in a `List`. VoiceOver gets a
+    /// Swipe toward the leading edge (left, or right in right-to-left layouts) to reveal a Delete
+    /// button on the trailing side; swipe far enough and the row slides away and `onDelete` runs. Works in a `ScrollView`/`VStack`, not only in a `List`. VoiceOver gets a
     /// Delete action instead of the gesture.
     func kitoSwipeToDelete(cornerRadius: CGFloat = 18, label: String = "Remove", onDelete: @escaping () -> Void) -> some View {
         modifier(KitoSwipeToDeleteModifier(cornerRadius: cornerRadius, label: label, onDelete: onDelete))
@@ -21,6 +21,7 @@ public extension View {
 private struct KitoSwipeToDeleteModifier: ViewModifier {
     @Environment(\.kitoTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.layoutDirection) private var layoutDirection
     let cornerRadius: CGFloat
     let label: String
     let onDelete: () -> Void
@@ -70,15 +71,19 @@ private struct KitoSwipeToDeleteModifier: ViewModifier {
             .opacity(offset < 0 ? 1 : 0)
     }
 
+    /// Drag values are physical (left-to-right on screen) while `offset(x:)` mirrors in RTL, so
+    /// convert once here and keep the rest semantic: negative = toward the leading edge.
+    private var direction: CGFloat { layoutDirection == .rightToLeft ? -1 : 1 }
+
     private var drag: some Gesture {
         DragGesture(minimumDistance: 14)
             .onChanged { value in
                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                let proposed = restingOffset + value.translation.width
+                let proposed = restingOffset + value.translation.width * direction
                 offset = proposed > 0 ? proposed * 0.15 : proposed
             }
             .onEnded { value in
-                let predicted = restingOffset + value.predictedEndTranslation.width
+                let predicted = restingOffset + value.predictedEndTranslation.width * direction
                 if pastThreshold || (width > 0 && -predicted > width * 0.8) {
                     delete()
                 } else if offset < -revealWidth * 0.5 {
@@ -131,6 +136,7 @@ public struct KitoUndoBar: View {
                     .trim(from: 0, to: remaining)
                     .stroke(.white, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .flipsForRightToLeftLayoutDirection(true) // Circle doesn't mirror but rotation does; keeps the start at the top in RTL
                 Image(systemName: "trash").font(.system(size: 11, weight: .bold))
             }
             .frame(width: 26, height: 26)
