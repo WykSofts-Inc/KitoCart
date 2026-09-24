@@ -11,6 +11,7 @@ import KitoCore
 
 private struct KitoCartFlightItemView: View {
     let flight: KitoCartFlight
+    var origin: CGPoint = .zero
     let onComplete: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -29,8 +30,8 @@ private struct KitoCartFlightItemView: View {
             .opacity(opacity)
             .modifier(KitoCartFlightPathEffect(
                 progress: progress,
-                start: CGPoint(x: flight.startFrame.midX, y: flight.startFrame.midY),
-                end: CGPoint(x: flight.endFrame.midX, y: flight.endFrame.midY),
+                start: CGPoint(x: flight.startFrame.midX - origin.x, y: flight.startFrame.midY - origin.y),
+                end: CGPoint(x: flight.endFrame.midX - origin.x, y: flight.endFrame.midY - origin.y),
                 lift: reduceMotion ? 0 : flight.style.lift
             ))
             .onAppear {
@@ -57,12 +58,20 @@ struct KitoCartFlightOverlay: View {
     @Bindable var coordinator: KitoCartFlightCoordinator
 
     var body: some View {
-        ZStack {
-            ForEach(coordinator.flights) { flight in
-                KitoCartFlightItemView(flight: flight) {
-                    coordinator.completeFlight(flight.id)
+        // Source and anchor frames are registered in global coordinates; convert them into
+        // this overlay's own space so the flight lines up wherever the host sits (a full
+        // screen, a sheet, a card in a scroll view), and pin items to the top-leading corner
+        // so the path effect's translation starts from a known origin.
+        GeometryReader { proxy in
+            let origin = proxy.frame(in: .global).origin
+            ZStack(alignment: .topLeading) {
+                ForEach(coordinator.flights) { flight in
+                    KitoCartFlightItemView(flight: flight, origin: origin) {
+                        coordinator.completeFlight(flight.id)
+                    }
                 }
             }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
         }
         .allowsHitTesting(false)
     }
