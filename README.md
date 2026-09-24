@@ -1,5 +1,7 @@
 # KitoCart
 
+**[Documentation](https://wyksofts-inc.github.io/KitoCart/documentation/kitocart/)**
+
 Cart state management (MVVM) plus a proper "fly to cart" animation — an
 icon arcs from wherever the user tapped to your cart badge, using
 `GeometryEffect` for a genuinely smooth curved path, not a naive position
