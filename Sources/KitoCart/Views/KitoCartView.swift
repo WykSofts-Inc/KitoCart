@@ -68,10 +68,16 @@ public struct KitoCartItemRow<Thumbnail: View>: View {
 ///
 /// ```swift
 /// KitoCartView(cart: cart, rules: KitoCartPricingRules(deliveryFee: 150, freeDeliveryThreshold: 2_000),
-///              promoValidator: validator, onCheckout: { total in … }) { item in
+///              promoValidator: validator, appliedPromo: $promo,
+///              onCheckout: { pricing in pay(pricing.total, code: pricing.promo?.code) },
+///              emptyTitle: "Your bag is empty", emptyMessage: "Pieces you add land here.") { item in
 ///     KitoRemoteImage(url: item.imageURL)
 /// }
 /// ```
+///
+/// The applied promo code travels with the pricing handed to `onCheckout` (`pricing.promo`).
+/// Pass `appliedPromo` to read or set it from outside, or `onPromoChange` to hear about it.
+/// For a completely different empty state, use `.emptyState { MyEmptyView() }`.
 public struct KitoCartView<Thumbnail: View>: View {
     @Environment(\.kitoTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -82,9 +88,15 @@ public struct KitoCartView<Thumbnail: View>: View {
     let checkoutTitle: String
     let onCheckout: (KitoCartPricing) -> Void
     let onBrowse: (() -> Void)?
+    let appliedPromo: Binding<KitoPromoCode?>?
+    let onPromoChange: ((KitoPromoCode?) -> Void)?
+    let emptyTitle: String
+    let emptyMessage: String
+    let emptyActionTitle: String?
     let thumbnail: (KitoCartItem) -> Thumbnail
+    private var customEmpty: AnyView?
 
-    @State private var promo: KitoPromoCode?
+    @State private var localPromo: KitoPromoCode?
 
     public init(
         cart: KitoCartViewModel,
@@ -94,6 +106,11 @@ public struct KitoCartView<Thumbnail: View>: View {
         checkoutTitle: String = "Checkout",
         onCheckout: @escaping (KitoCartPricing) -> Void,
         onBrowse: (() -> Void)? = nil,
+        appliedPromo: Binding<KitoPromoCode?>? = nil,
+        onPromoChange: ((KitoPromoCode?) -> Void)? = nil,
+        emptyTitle: String = "Your cart is empty",
+        emptyMessage: String = "Add something you love and it'll show up here.",
+        emptyActionTitle: String? = "Start shopping",
         @ViewBuilder thumbnail: @escaping (KitoCartItem) -> Thumbnail
     ) {
         self.cart = cart
@@ -103,8 +120,36 @@ public struct KitoCartView<Thumbnail: View>: View {
         self.checkoutTitle = checkoutTitle
         self.onCheckout = onCheckout
         self.onBrowse = onBrowse
+        self.appliedPromo = appliedPromo
+        self.onPromoChange = onPromoChange
+        self.emptyTitle = emptyTitle
+        self.emptyMessage = emptyMessage
+        self.emptyActionTitle = emptyActionTitle
         self.thumbnail = thumbnail
     }
+
+    /// Replaces the built-in empty state with your own view.
+    public func emptyState<Empty: View>(@ViewBuilder _ content: () -> Empty) -> KitoCartView {
+        var copy = self
+        copy.customEmpty = AnyView(content())
+        return copy
+    }
+
+    /// The applied promo: the caller's binding when there is one, otherwise the view's own state.
+    private var promoBinding: Binding<KitoPromoCode?> {
+        let external = appliedPromo
+        let local = $localPromo
+        let onChange = onPromoChange
+        return Binding(
+            get: { external?.wrappedValue ?? local.wrappedValue },
+            set: { newValue in
+                if let external { external.wrappedValue = newValue } else { local.wrappedValue = newValue }
+                onChange?(newValue)
+            }
+        )
+    }
+
+    private var promo: KitoPromoCode? { appliedPromo?.wrappedValue ?? localPromo }
 
     private var pricing: KitoCartPricing { rules.pricing(subtotal: cart.subtotal, promo: promo) }
     private var spring: Animation? { reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.82) }
@@ -113,7 +158,7 @@ public struct KitoCartView<Thumbnail: View>: View {
         ZStack {
             theme.colors.background.ignoresSafeArea()
             if cart.isEmpty {
-                KitoEmptyCartView(action: onBrowse)
+                emptyView
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
             } else {
                 content.transition(.opacity)
@@ -121,6 +166,14 @@ public struct KitoCartView<Thumbnail: View>: View {
         }
         .animation(spring, value: cart.isEmpty)
         .kitoCartUndoBar(cart, bottomInset: cart.isEmpty ? 0 : 72)
+    }
+
+    @ViewBuilder private var emptyView: some View {
+        if let customEmpty {
+            customEmpty
+        } else {
+            KitoEmptyCartView(title: emptyTitle, message: emptyMessage, actionTitle: emptyActionTitle, action: onBrowse)
+        }
     }
 
     private var content: some View {
@@ -143,7 +196,7 @@ public struct KitoCartView<Thumbnail: View>: View {
                     .transition(.asymmetric(insertion: .scale(scale: 0.95).combined(with: .opacity), removal: .opacity))
                 }
                 if let promoValidator {
-                    KitoPromoCodeField(applied: $promo, validator: promoValidator, subtotal: cart.subtotal, currencyCode: currencyCode)
+                    KitoPromoCodeField(applied: promoBinding, validator: promoValidator, subtotal: cart.subtotal, currencyCode: currencyCode)
                         .padding(.top, 6)
                 }
                 KitoPriceBreakdown(pricing: pricing, currencyCode: currencyCode)
