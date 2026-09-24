@@ -250,6 +250,7 @@ customizing the curve.
 - The add-to-cart flight is drawn in screen coordinates, so it lands on the cart anchor in either direction.
 - Disclosure chevrons and the empty-cart arrow use `chevron.forward` / `arrow.forward` and flip with the layout.
 - `KitoCartMoney` deliberately formats with fixed Latin digits and separators; format prices yourself if you need locale digits.
+- The undo bar's countdown ring starts at the top and runs the mirrored way in RTL.
 
 ## License
 

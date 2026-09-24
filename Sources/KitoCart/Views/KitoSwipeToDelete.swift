@@ -136,6 +136,7 @@ public struct KitoUndoBar: View {
                     .trim(from: 0, to: remaining)
                     .stroke(.white, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .flipsForRightToLeftLayoutDirection(true) // Circle doesn't mirror but rotation does; keeps the start at the top in RTL
                 Image(systemName: "trash").font(.system(size: 11, weight: .bold))
             }
             .frame(width: 26, height: 26)
